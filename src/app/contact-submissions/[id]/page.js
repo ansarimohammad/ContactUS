@@ -3,13 +3,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function ContactSubmissions() {
+export default function SubmissionDetailPage({ params }) {
   const router = useRouter();
+  const { id } = params;
 
   useEffect(() => {
     // Redirect to admin version
-    router.replace('/admin/contact-submissions');
-  }, [router]);
+    router.replace(`/admin/contact-submissions/${id}`);
+  }, [id, router]);
 
   return (
     <div className="container mx-auto px-4 py-8">
