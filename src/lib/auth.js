@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 // Secret key for JWT signing/verification
 const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -12,18 +13,53 @@ const EXPIRATION_TIME = '24h';
 const COOKIE_NAME = 'auth_token';
 const COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day in seconds
 
-// Admin credentials
+// Admin credentials - use hashed password from environment
 const ADMIN_CREDENTIALS = {
   username: process.env.ADMIN_USERNAME || 'admin',
-  password: process.env.ADMIN_PASSWORD || 'admin123',
+  // No default password - stored as hash in environment variable
+  passwordHash: process.env.ADMIN_PASSWORD_HASH,
 };
+
+/**
+ * Hash a password using SHA-256
+ * @param {string} password - The plain text password to hash
+ * @returns {string} The hashed password
+ */
+export function hashPassword(password) {
+  return crypto
+    .createHash('sha256')
+    .update(password)
+    .digest('hex');
+}
+
+/**
+ * Verify a password against a stored hash
+ * @param {string} password - The plain text password to verify
+ * @param {string} hash - The stored password hash
+ * @returns {boolean} True if the password matches the hash
+ */
+export function verifyPassword(password, hash) {
+  const passwordHash = hashPassword(password);
+  return passwordHash === hash;
+}
 
 /**
  * Authenticate admin user
  */
 export function authenticateAdmin(username, password) {
-  return username === ADMIN_CREDENTIALS.username && 
-         password === ADMIN_CREDENTIALS.password;
+  // Check if username matches
+  if (username !== ADMIN_CREDENTIALS.username) {
+    return false;
+  }
+  
+  // If no password hash is set, authentication fails
+  if (!ADMIN_CREDENTIALS.passwordHash) {
+    console.error('No admin password hash configured in environment variables');
+    return false;
+  }
+  
+  // Verify the password against the stored hash
+  return verifyPassword(password, ADMIN_CREDENTIALS.passwordHash);
 }
 
 /**
