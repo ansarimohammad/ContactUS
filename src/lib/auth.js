@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 // Secret key for JWT signing/verification
-// In production, use a proper environment variable
 const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Token expiration time (24 hours)
@@ -14,8 +13,6 @@ const COOKIE_NAME = 'auth_token';
 const COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day in seconds
 
 // Admin credentials
-// In a real application, these would be stored in a database
-// and the password would be hashed
 const ADMIN_CREDENTIALS = {
   username: process.env.ADMIN_USERNAME || 'admin',
   password: process.env.ADMIN_PASSWORD || 'admin123',
@@ -23,37 +20,14 @@ const ADMIN_CREDENTIALS = {
 
 /**
  * Authenticate admin user
- * @param {string} username - Admin username
- * @param {string} password - Admin password
- * @returns {boolean} - Authentication result
  */
 export function authenticateAdmin(username, password) {
-  // Log the authentication attempt and expected values
-  console.log('Auth attempt with:', { 
-    username, 
-    password: '***',
-    expectedUsername: ADMIN_CREDENTIALS.username,
-    hasPassword: !!ADMIN_CREDENTIALS.password
-  });
-  
-  // Perform the actual authentication
-  const isUsernameMatch = username === ADMIN_CREDENTIALS.username;
-  const isPasswordMatch = password === ADMIN_CREDENTIALS.password;
-  
-  console.log('Auth matches:', { 
-    usernameMatch: isUsernameMatch, 
-    passwordMatch: isPasswordMatch 
-  });
-  
-  // In a real application, you would query a database
-  // and compare hashed passwords
-  return isUsernameMatch && isPasswordMatch;
+  return username === ADMIN_CREDENTIALS.username && 
+         password === ADMIN_CREDENTIALS.password;
 }
 
 /**
  * Generate a JWT token for authenticated admin
- * @param {string} username - Admin username
- * @returns {string} - JWT token
  */
 export async function generateToken(username) {
   const encoder = new TextEncoder();
@@ -70,17 +44,13 @@ export async function generateToken(username) {
 
 /**
  * Verify JWT token
- * @param {string} token - JWT token
- * @returns {boolean} - Verification result
  */
 export async function verifyToken(token) {
   try {
-    console.log('Verifying token...');
     const encoder = new TextEncoder();
     const secretKey = encoder.encode(SECRET_KEY);
     
     const { payload } = await jwtVerify(token, secretKey);
-    console.log('Token verified successfully:', payload);
     return !!payload;
   } catch (error) {
     console.error('Token verification error:', error);
@@ -89,26 +59,7 @@ export async function verifyToken(token) {
 }
 
 /**
- * Set authentication cookie
- * @param {string} token - JWT token
- * @returns {void}
- */
-export function setAuthCookie(token) {
-  cookies().set({
-    name: COOKIE_NAME,
-    value: token,
-    httpOnly: true,
-    path: '/',
-    maxAge: COOKIE_MAX_AGE,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
-}
-
-/**
- * Get authentication cookie
- * @param {Request} request - HTTP request
- * @returns {string|null} - Cookie value or null
+ * Get authentication cookie from request
  */
 export function getAuthCookie(request) {
   const cookieHeader = request.headers.get('Cookie');
@@ -124,8 +75,15 @@ export function getAuthCookie(request) {
 }
 
 /**
+ * Get the token from cookies
+ */
+export function getTokenFromCookies() {
+  const cookieStore = cookies();
+  return cookieStore.get(COOKIE_NAME)?.value || null;
+}
+
+/**
  * Remove authentication cookie
- * @returns {void}
  */
 export function removeAuthCookie() {
   cookies().set({
@@ -141,17 +99,7 @@ export function removeAuthCookie() {
 }
 
 /**
- * Get the token from cookies
- * @returns {string|null} - The token from cookies or null
- */
-export function getTokenFromCookies() {
-  const cookieStore = cookies();
-  return cookieStore.get(COOKIE_NAME)?.value || null;
-}
-
-/**
  * Middleware to check if admin is authenticated
- * @returns {Promise<boolean>} - Whether the admin is authenticated
  */
 export async function isAuthenticated() {
   const token = getTokenFromCookies();

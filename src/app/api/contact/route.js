@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '../../../lib/mongodb';
-import ContactSubmission from '../../../models/ContactSubmission';
 import { connect } from '@/lib/db';
+import ContactSubmission from '../../../models/ContactSubmission';
 
 // Main handler function for contact form submissions
 export async function POST(request) {

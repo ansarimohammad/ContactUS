@@ -12,6 +12,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const router = useRouter();
 
   // Check if already authenticated
@@ -66,12 +67,16 @@ export default function AdminLogin() {
       console.log('Login response data:', data);
       
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        if (response.status === 429) {
+          setIsRateLimited(true);
+          setError('Too many login attempts. Please try again later.');
+        } else {
+          throw new Error(data.message || 'Login failed');
+        }
+      } else {
+        // Redirect to dashboard on successful login
+        router.push('/admin/dashboard');
       }
-      
-      // Redirect to dashboard on successful login
-      router.push('/admin/dashboard');
-      
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Login failed. Please try again.');
@@ -125,8 +130,14 @@ export default function AdminLogin() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">
+            <div className="mb-4 p-3 rounded bg-red-100 text-red-800 border border-red-300">
               {error}
+              {isRateLimited && (
+                <div className="mt-2 text-sm">
+                  For security reasons, login is temporarily disabled after multiple failed attempts.
+                  Please wait 15 minutes before trying again or contact the administrator.
+                </div>
+              )}
             </div>
           )}
 

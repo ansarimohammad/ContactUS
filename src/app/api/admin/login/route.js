@@ -9,11 +9,8 @@ export async function POST(request) {
     // Parse request body
     const { username, password } = await request.json();
     
-    console.log('Login attempt:', { username, password: '***' });
-    
     // Validate input
     if (!username || !password) {
-      console.log('Missing username or password');
       return NextResponse.json(
         { message: 'Username and password are required' },
         { status: 400 }
@@ -22,10 +19,8 @@ export async function POST(request) {
     
     // Authenticate admin
     const isAuthenticated = authenticateAdmin(username, password);
-    console.log('Authentication result:', isAuthenticated);
     
     if (!isAuthenticated) {
-      console.log('Invalid credentials for:', username);
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
@@ -34,7 +29,6 @@ export async function POST(request) {
     
     // Generate JWT token
     const token = await generateToken(username);
-    console.log('Token generated successfully');
     
     // Create a response with the auth cookie
     const response = NextResponse.json({
@@ -52,8 +46,6 @@ export async function POST(request) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
-    
-    console.log('Cookie set successfully');
     
     // Return the response
     return response;

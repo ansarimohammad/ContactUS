@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '../../../../lib/mongodb';
+import { connect } from '@/lib/db';
 import ContactSubmission from '../../../../models/ContactSubmission';
 import { getAuthCookie, verifyToken } from '@/lib/auth';
 
@@ -34,7 +34,7 @@ export async function GET(request) {
     const sortOrder = url.searchParams.get('sortOrder') || 'desc';
     
     // Connect to the database
-    await connectToDatabase();
+    await connect();
     
     // Build query
     const query = {};
@@ -112,7 +112,7 @@ export async function POST(request) {
     }
     
     // Connect to the database
-    await connectToDatabase();
+    await connect();
     
     // Find the submission by ID
     const submission = await ContactSubmission.findById(id).lean();
@@ -164,7 +164,7 @@ export async function PUT(request) {
     }
     
     // Connect to the database
-    await connectToDatabase();
+    await connect();
     
     // Update the submission status
     const updatedSubmission = await ContactSubmission.findByIdAndUpdate(
